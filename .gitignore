@@ -1,0 +1,19 @@
+# Dependências
+node_modules/
+
+# Segurança (ESSENCIAL)
+.env
+
+# Compilação
+dist/
+build/
+
+# Logs e Cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# Sistema
+.DS_Store
+Thumbs.db
