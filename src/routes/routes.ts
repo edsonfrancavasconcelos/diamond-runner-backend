@@ -131,6 +131,154 @@ router.get(
 );
 
 /* ============================================================
+   POST /api/auth/first-password
+
+   Define a senha no PRIMEIRO ACESSO.
+   Usa service role (admin.updateUserById).
+   Não exige sessão do app.
+============================================================ */
+
+router.post(
+  "/auth/first-password",
+  async (req: Request, res: Response) => {
+    try {
+      const email = String(req.body?.email || "")
+        .trim()
+        .toLowerCase();
+
+      const idDr = String(req.body?.id_dr || "")
+        .trim()
+        .toUpperCase();
+
+      const password = String(req.body?.password || "");
+
+      console.log("");
+      console.log("========================================");
+      console.log("🔐 FIRST PASSWORD");
+      console.log("========================================");
+      console.log("E-mail:", email || "(vazio)");
+      console.log("ID DR:", idDr || "(vazio)");
+      console.log("========================================");
+
+      if ((!email && !idDr) || password.length < 6) {
+        return res.status(400).json({
+          status: "error",
+          code: "INVALID_PAYLOAD",
+          message:
+            "Informe e-mail ou ID DR e senha com no mínimo 6 caracteres.",
+        });
+      }
+
+      let query = supabase
+        .from("profiles")
+        .select(
+          "id, email, id_dr, full_name, status, is_active",
+        );
+
+      if (email) {
+        query = query.eq("email", email);
+      } else {
+        query = query.eq("id_dr", idDr);
+      }
+
+      const { data: profile, error: profileError } =
+        await query.maybeSingle();
+
+      if (profileError) {
+        console.error(
+          "❌ ERRO AO BUSCAR PROFILE:",
+          profileError,
+        );
+
+        return res.status(500).json({
+          status: "error",
+          code: "PROFILE_LOOKUP_ERROR",
+          message: "Erro ao localizar cadastro.",
+          details: profileError.message,
+        });
+      }
+
+      if (!profile) {
+        return res.status(404).json({
+          status: "error",
+          code: "PROFILE_NOT_FOUND",
+          message: "Cadastro não encontrado.",
+        });
+      }
+
+      if (profile.is_active === false) {
+        return res.status(403).json({
+          status: "error",
+          code: "PROFILE_INACTIVE",
+          message: "Cadastro inativo.",
+        });
+      }
+
+      if (
+        profile.status &&
+        String(profile.status).toUpperCase() !== "ATIVO"
+      ) {
+        return res.status(403).json({
+          status: "error",
+          code: "PROFILE_NOT_ACTIVE",
+          message: "Cadastro não está ativo.",
+        });
+      }
+
+      const { error: updateError } =
+        await supabase.auth.admin.updateUserById(
+          profile.id,
+          {
+            password,
+            email_confirm: true,
+          },
+        );
+
+      if (updateError) {
+        console.error(
+          "❌ ERRO updateUserById:",
+          updateError,
+        );
+
+        return res.status(400).json({
+          status: "error",
+          code: "PASSWORD_UPDATE_ERROR",
+          message:
+            updateError.message ||
+            "Não foi possível definir a senha.",
+        });
+      }
+
+      console.log(
+        "✅ SENHA DEFINIDA PARA:",
+        profile.email,
+        profile.id_dr,
+      );
+
+      return res.status(200).json({
+        status: "success",
+        message: "Senha definida com sucesso.",
+        email: profile.email,
+        id_dr: profile.id_dr,
+        full_name: profile.full_name,
+        userId: profile.id,
+      });
+    } catch (error: any) {
+      console.error(
+        "❌ ERRO /auth/first-password:",
+        error,
+      );
+
+      return res.status(500).json({
+        status: "error",
+        code: "FIRST_PASSWORD_ERROR",
+        message: error?.message || "Erro interno.",
+      });
+    }
+  },
+);
+
+/* ============================================================
    POST /api/payments/confirm
 
    CADASTRO DEFINITIVO
