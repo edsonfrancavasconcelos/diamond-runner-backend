@@ -7,7 +7,10 @@ import { AppController } from "../controllers/AppController.js";
 import { SsoController } from "../controllers/SsoController.js";
 import { handleAsaasWebhook } from "../controllers/AsaasWebhookController.js";
 import { handleStripeWebhook } from "../controllers/StripeWebhookController.js";
-import { createPaymentIntent } from "../controllers/PaymentController.js";
+import {
+  createPaymentIntent,
+  createCheckoutSession,
+} from "../controllers/PaymentController.js";
 
 const router = Router();
 
@@ -42,6 +45,16 @@ router.post(
   authenticate,
   SsoController.create,
 );
+
+/* ============================================================
+   STRIPE - CHECKOUT (público — onboarding sem login)
+============================================================ */
+
+router.post(
+  "/payments/checkout",
+  createCheckoutSession,
+);
+
 
 /* ============================================================
    USUÁRIO LOGADO
