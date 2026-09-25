@@ -5,7 +5,6 @@ import { supabase } from "../services/supabase.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { AppController } from "../controllers/AppController.js";
 import { SsoController } from "../controllers/SsoController.js";
-import { handleAsaasWebhook } from "../controllers/AsaasWebhookController.js";
 import { handleStripeWebhook } from "../controllers/StripeWebhookController.js";
 import {
   createPaymentIntent,
@@ -1132,10 +1131,7 @@ router.post(
    WEBHOOK ASAAS
 ============================================================ */
 
-router.post(
-  "/webhook/asaas",
-  handleAsaasWebhook,
-);
+
 
 /* ============================================================
    WEBHOOK STRIPE

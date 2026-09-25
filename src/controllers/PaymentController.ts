@@ -174,3 +174,91 @@ export const confirmPayment = async (req: Request, res: Response) => {
     });
   }
 };
+// ===============================
+// Stripe Checkout Session
+// ===============================
+export const createCheckoutSession = async (req: Request, res: Response) => {
+  try {
+    const {
+      amount,
+      planName = "BUILDER",
+      email,
+      fullName,
+      documentId,
+      phone,
+      sponsorUuid,
+      sponsorId,
+      sponsorName,
+    } = req.body;
+
+    const priceReais = Number(amount);
+    if (!priceReais || priceReais <= 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "amount inválido",
+      });
+    }
+
+    const stripeSecret = process.env.STRIPE_SECRET_KEY || "";
+    if (!stripeSecret) {
+      return res.status(500).json({
+        status: "error",
+        message: "STRIPE_SECRET_KEY não configurada",
+      });
+    }
+
+    const stripe = new Stripe(stripeSecret, {
+      apiVersion: "2022-11-15",
+    });
+
+    const amountCents = Math.round(priceReais * 100);
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      customer_email: email || undefined,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: "brl",
+            unit_amount: amountCents,
+            product_data: {
+              name: `Diamond Runner - ${planName}`,
+              description: fullName
+                ? `Adesão ${planName} - ${fullName}`
+                : `Adesão ${planName}`,
+            },
+          },
+        },
+      ],
+      success_url: `diamondrunner://payment-success?email=${encodeURIComponent(
+        String(email || ""),
+      )}`,
+      cancel_url: `diamondrunner://payment-cancel`,
+      metadata: {
+        planName: String(planName),
+        email: String(email || ""),
+        fullName: String(fullName || ""),
+        documentId: String(documentId || ""),
+        phone: String(phone || ""),
+        sponsorUuid: String(sponsorUuid || ""),
+        sponsorId: String(sponsorId || ""),
+        sponsorName: String(sponsorName || ""),
+        amount: String(priceReais),
+      },
+    });
+
+    return res.status(200).json({
+      status: "success",
+      url: session.url,
+      sessionId: session.id,
+    });
+  } catch (error: any) {
+    console.error("Checkout error:", error?.message || error);
+    return res.status(500).json({
+      status: "error",
+      message: error?.message || "Falha ao criar Checkout",
+    });
+  }
+};
