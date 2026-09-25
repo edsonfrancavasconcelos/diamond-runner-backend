@@ -1037,7 +1037,7 @@ router.post(
       );
 
       console.log(
-        "========================================",
+     
       );
 
       return res.status(200).json({
@@ -1078,28 +1078,22 @@ router.post(
     } catch (error: any) {
       console.error("");
       console.error(
-        "========================================",
+       
       );
       console.error(
         "❌ ERRO DIAMOND BACKEND",
       );
       console.error(
-        "========================================",
+      
       );
       console.error(
         error,
       );
       console.error(
-        "========================================",
+   
       );
 
-      /* ======================================================
-         ROLLBACK AUTH
-
-         Só remove o Auth se nós realmente criamos ele.
-      ====================================================== */
-
-      if (createdAuthUserId) {
+        if (createdAuthUserId) {
         try {
           await supabase.auth.admin.deleteUser(
             createdAuthUserId,
@@ -1127,24 +1121,7 @@ router.post(
   },
 );
 
-/* ============================================================
-   WEBHOOK ASAAS
-============================================================ */
 
-
-
-/* ============================================================
-   WEBHOOK STRIPE
-============================================================ */
-
-router.post(
-  "/webhook/stripe",
-  handleStripeWebhook,
-);
-
-/* ============================================================
-   STRIPE - CREATE PAYMENT INTENT
-============================================================ */
 
 router.post(
   "/payments/create",
@@ -1152,8 +1129,5 @@ router.post(
   createPaymentIntent,
 );
 
-/* ============================================================
-   EXPORT
-============================================================ */
 
 export default router;
